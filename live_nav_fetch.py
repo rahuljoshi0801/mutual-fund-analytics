@@ -2,10 +2,8 @@ import requests
 import pandas as pd
 import os
 
-# Create output folder if it doesn't exist
 os.makedirs("data/raw/live_nav", exist_ok=True)
 
-# AMFI Codes
 funds = {
     "HDFC_Top100_Direct": 125497,
     "SBI_Bluechip": 119551,
@@ -15,39 +13,25 @@ funds = {
     "Kotak_Bluechip": 120841
 }
 
-print("=" * 60)
-print("LIVE NAV FETCH")
-print("=" * 60)
+print("fetching live nav data...\n")
 
 for fund_name, amfi_code in funds.items():
-
     url = f"https://api.mfapi.in/mf/{amfi_code}"
 
     try:
-        response = requests.get(url, timeout=10)
+        r = requests.get(url, timeout=10)
 
-        if response.status_code == 200:
-
-            data = response.json()
-
-            # Scheme Information
-            scheme_name = data["meta"]["scheme_name"]
-
-            print(f"\nFetching: {scheme_name}")
-
-            nav_df = pd.DataFrame(data["data"])
-
-            file_path = f"data/raw/live_nav/{fund_name}.csv"
-
-            nav_df.to_csv(file_path, index=False)
-
-            print(f"Saved -> {file_path}")
-            print(f"Records -> {len(nav_df)}")
-
+        if r.status_code == 200:
+            data = r.json()
+            scheme = data["meta"]["scheme_name"]
+            df = pd.DataFrame(data["data"])
+            path = f"data/raw/live_nav/{fund_name}.csv"
+            df.to_csv(path, index=False)
+            print(f"{scheme} -> {len(df)} records saved")
         else:
-            print(f"Failed: {fund_name}")
+            print(f"failed: {fund_name} (status {r.status_code})")
 
     except Exception as e:
-        print(f"Error fetching {fund_name}: {e}")
+        print(f"error: {fund_name} - {e}")
 
-print("\nLIVE NAV FETCH COMPLETED")
+print("\ndone.")
